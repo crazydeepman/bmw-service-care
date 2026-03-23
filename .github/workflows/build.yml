@@ -1,0 +1,42 @@
+name: Build IPA
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install CocoaPods
+        run: sudo gem install cocoapods
+
+      - name: Pod Install
+        run: cd src && pod install --repo-update
+
+      - name: Build Archive
+        run: |
+          cd src
+          xcodebuild \
+            -workspace "BMW Service.xcworkspace" \
+            -scheme "BMW Service" \
+            -configuration Release \
+            -sdk iphoneos \
+            -archivePath ../build/BMW.xcarchive \
+            archive \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO
+
+      - name: Create IPA
+        run: |
+          mkdir -p build/Payload
+          cp -r "build/BMW.xcarchive/Products/Applications/BMW Service.app" build/Payload/
+          cd build && zip -r ../BMW-Service-Care.ipa Payload/
+
+      - name: Upload IPA
+        uses: actions/upload-artifact@v3
+        with:
+          name: BMW-Service-Care
+          path: BMW-Service-Care.ipa
