@@ -8,7 +8,7 @@ jobs:
   build:
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Install CocoaPods
         run: sudo gem install cocoapods
@@ -29,11 +29,18 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO
 
-      - name: Create IPA
+      - name: Find App and Create IPA
         run: |
-          mkdir -p build/Payload
-          cp -r "build/BMW.xcarchive/Products/Applications/BMW Service.app" build/Payload/
-          cd build && zip -r ../BMW-Service-Care.ipa Payload/
+          echo "=== محتوى مجلد البناء ==="
+          find build/ -name "*.app" -type d
+          
+          APP_PATH=$(find build/ -name "*.app" -type d | head -1)
+          echo "مسار التطبيق: $APP_PATH"
+          
+          mkdir -p Payload
+          cp -r "$APP_PATH" Payload/
+          zip -r BMW-Service-Care.ipa Payload/
+          echo "✅ تم إنشاء IPA بنجاح"
 
       - name: Upload IPA
         uses: actions/upload-artifact@v4
